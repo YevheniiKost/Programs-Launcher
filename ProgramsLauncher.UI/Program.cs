@@ -1,5 +1,5 @@
 using ProgramsLauncher.Core;
-using ProgramsLauncher.Core.Log;
+using ProgramsLauncher.Core.Logger;
 
 namespace ProgramsLauncher;
 

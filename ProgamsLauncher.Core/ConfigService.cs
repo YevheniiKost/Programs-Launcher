@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using ProgramsLauncher.Core.Log;
+using ProgramsLauncher.Core.Logger;
 
 namespace ProgramsLauncher.Core;
 
