@@ -97,10 +97,11 @@ partial class Form1
         AutostartCheckBox.UseVisualStyleBackColor = true;
         AutostartCheckBox.CheckedChanged += AutostartCheckBox_CheckedChanged;
         // 
-        // Programs Launcher
+        // Form1
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+        AutoSize = true;
         ClientSize = new System.Drawing.Size(240, 362);
         Controls.Add(AutostartCheckBox);
         Controls.Add(EditProfilesButton);
@@ -108,7 +109,7 @@ partial class Form1
         Controls.Add(SelectProfileLabel);
         Controls.Add(ProfilesComboBox);
         Controls.Add(RunAllButton);
-        Name = "Programs Launcher";
+        MaximizeBox = false;
         Text = "Programs Launcher";
         ResumeLayout(false);
     }

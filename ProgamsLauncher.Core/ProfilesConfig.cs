@@ -1,4 +1,4 @@
-﻿namespace ProgramsLauncher;
+﻿namespace ProgramsLauncher.Core;
 
 public class ProfilesConfig
 {

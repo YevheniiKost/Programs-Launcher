@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>ProgramsLauncher</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +22,10 @@
       <Compile Update="Form1.Designer.cs">
         <DependentUpon>Form1.cs</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ProgamsLauncher.Core\ProgamsLauncher.Core.csproj" />
     </ItemGroup>
 
 </Project>

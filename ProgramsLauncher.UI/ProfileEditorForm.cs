@@ -1,51 +1,55 @@
-﻿namespace ProgramsLauncher;
+﻿using ProgramsLauncher.Core;
+
+namespace ProgramsLauncher;
 
 public partial class ProfileEditorForm : Form
 {
-    private ProfilesConfig _config;
-    private Profile _currentProfile;
+    private readonly IProfilesEditorModel _editorModel;
 
-    public ProfileEditorForm()
+    public ProfileEditorForm(IProfilesEditorModel editorModel)
     {
+        _editorModel = editorModel;
+        
         InitializeComponent();
 
-        _config = ConfigService.LoadConfig();
-        _currentProfile = _config.Profiles[0];
-
-        RefreshProfilesList();
+        _editorModel.ProfilesListUpdate += OnProfilesListUpdated;
+        _editorModel.CurrentProfileItemsUpdate += OnCurrentProfileItemsUpdated;
+        
+        _editorModel.Initialize();
     }
 
-    private void RefreshProgramsList()
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        
+        _editorModel.ProfilesListUpdate -= OnProfilesListUpdated;
+        _editorModel.CurrentProfileItemsUpdate -= OnCurrentProfileItemsUpdated;
+    }
+
+    private void OnCurrentProfileItemsUpdated(object? sender, List<string> apps)
     {
         ProgramsListBox.Items.Clear();
-        foreach (var app in _currentProfile.Applications)
+        foreach (var app in apps)
         {
-            ProgramsListBox.Items.Add(app.Name);
+            ProgramsListBox.Items.Add(app);
         }
     }
 
-    private void RefreshProfilesList()
+    private void OnProfilesListUpdated(object? sender, ProfilesListUpdateEventArgs args)
     {
         ProfilesComboBox.Items.Clear();
 
-        foreach (var profile in _config.Profiles)
+        foreach (var profile in args.ProfilesNames)
         {
-            ProfilesComboBox.Items.Add(profile.Name);
+            ProfilesComboBox.Items.Add(profile);
         }
 
-        if (_config.Profiles.Count > 0)
-        {
-            ProfilesComboBox.SelectedIndex = _config.Profiles.IndexOf(_currentProfile);
-            RefreshProgramsList();
-        }
+        ProfilesComboBox.SelectedIndex = args.SelectedProfileIndex;
     }
-
+    
     private void ProfilesComboBox_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (ProfilesComboBox.SelectedIndex < 0) return;
-
-        _currentProfile = _config.Profiles[ProfilesComboBox.SelectedIndex];
-        RefreshProgramsList();
+         _editorModel.SelectProfile(ProfilesComboBox.SelectedIndex);
     }
 
     private void AddProgramButton_Click(object sender, EventArgs e)
@@ -70,11 +74,7 @@ public partial class ProfileEditorForm : Form
             return;
         }
 
-        var newApp = new AppEntry(appName, appPath);
-
-        _currentProfile.Applications.Add(newApp);
-        RefreshProgramsList();
-        ConfigService.SaveConfig(_config);
+        _editorModel.AddNewApp(appName, appPath);
 
         ProgramNameTextBox.Clear();
         ProgramPathTextBox.Clear();
@@ -100,23 +100,14 @@ public partial class ProfileEditorForm : Form
 
     private void SaveButton_Click(object sender, EventArgs e)
     {
-        ConfigService.SaveConfig(_config);
+        _editorModel.Save();
         MessageBox.Show("Configuration saved successfully.", "Save Config", MessageBoxButtons.OK,
             MessageBoxIcon.Information);
     }
 
     private void RemoveProgramButton_Click(object sender, EventArgs e)
     {
-        int index = ProgramsListBox.SelectedIndex;
-        if (index < 0)
-        {
-            MessageBox.Show("Select program to delete.");
-            return;
-        }
-
-        _currentProfile.Applications.RemoveAt(index);
-        ConfigService.SaveConfig(_config);
-        RefreshProgramsList();
+       _editorModel.RemoveApp(ProgramsListBox.SelectedIndex);
     }
 
     private void AddProfileButton_Click(object sender, EventArgs e)
@@ -130,28 +121,12 @@ public partial class ProfileEditorForm : Form
             return;
         }
 
-        var newProfile = new Profile
-        {
-            Name = profileName
-        };
-
-        _config.Profiles.Add(newProfile);
-        _currentProfile = newProfile;
-        RefreshProfilesList();
-        ConfigService.SaveConfig(_config);
-
+        _editorModel.AddProfile(profileName);
         ProfileNameTextBox.Clear();
     }
 
     private void DeleteProfileButton_Click(object sender, EventArgs e)
     {
-        if (_config.Profiles.Count <= 1)
-        {
-            MessageBox.Show("At least one profile must exist.", "Delete Profile", MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-            return;
-        }
-
         int index = ProfilesComboBox.SelectedIndex;
         if (index < 0)
         {
@@ -161,17 +136,14 @@ public partial class ProfileEditorForm : Form
 
         //add message box confirmation
         var result = MessageBox.Show(
-            $"Are you sure you want to delete the profile '{_config.Profiles[index].Name}'?",
+            $"Are you sure you want to delete the profile '{_editorModel.CurrentProfile.Name}'?",
             "Confirm Delete",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Warning);
 
         if (result == DialogResult.Yes)
         {
-            _config.Profiles.RemoveAt(index);
-            _currentProfile = _config.Profiles[0];
-            RefreshProfilesList();
-            ConfigService.SaveConfig(_config);
+            _editorModel.DeleteProfile();
         }
     }
 
@@ -191,10 +163,7 @@ public partial class ProfileEditorForm : Form
                 MessageBoxIcon.Warning);
             return;
         }
-
-        _config.Profiles[index].Name = newName;
-        RefreshProfilesList();
-        ConfigService.SaveConfig(_config);
+        _editorModel.RenameProfile(newName);
 
         ProfileNameTextBox.Clear();
     }

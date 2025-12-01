@@ -1,18 +1,26 @@
 ﻿using System.Diagnostics;
+using ProgramsLauncher.Core.Log;
 
-namespace ProgramsLauncher;
+namespace ProgramsLauncher.Core;
 
-public static class LauncherService
+public class LauncherService : ILauncherService
 {
-    public static void LaunchApplications(IEnumerable<AppEntry> apps)
+    private readonly ILogger _logger;
+
+    public LauncherService(ILogger logger)
+    {
+        _logger = logger;
+    }
+    
+    public void LaunchApplications(IEnumerable<AppEntry> apps)
     {
         foreach (AppEntry app in apps)
         {
             try
             {
-                if(IsAppRunning(app))
+                if (IsAppRunning(app))
                     continue;
-                
+
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = app.Path,
@@ -21,18 +29,15 @@ public static class LauncherService
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Failed to start \"{app.Name}\" ({app.Path}): {ex.Message}",
-                    "Launch error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                _logger.LogError($"Error while trying to launch app {app.Name}: {ex} {ex.Message}");
+                throw new LaunchAppException(app);
             }
         }
     }
 
-    public static bool IsAppRunning(AppEntry app)
+    private static bool IsAppRunning(AppEntry app)
     {
-        var processName = Path.GetFileNameWithoutExtension(app.Path);
+        string processName = Path.GetFileNameWithoutExtension(app.Path);
 
         foreach (var process in Process.GetProcessesByName(processName))
         {
